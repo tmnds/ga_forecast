@@ -10,17 +10,19 @@ def forecast_mlp(X, y, solver, hidden_neurons, learning_rate, activation, jumps)
 
     lst_results =[]
 
+    # Divisão do dataset e Normalizaçao
     X_train, X_valid, X_test, y_train, y_valid, y_test = prc.split_dataset(X, y)
 
     X_train_norm, X_valid_norm, X_test_norm = prc.norm_X_dataset(X_train, X_valid, X_test)
-
     y_train_norm, y_valid_norm = prc.norm_y_dataset(y_train, y_valid)
+
+    best_errors = []
+
+    best_error = float('inf')
+    best_rna = None
 
     for i in range(jumps):
         sd=i
-
-        best_error = float('inf')
-        best_rna = None
 
         for h in hidden_neurons:
             for l in learning_rate:
@@ -35,14 +37,14 @@ def forecast_mlp(X, y, solver, hidden_neurons, learning_rate, activation, jumps)
 
                     if error < best_error:
                         best_rna = rna
-                        best_error = error
+                        best_errors.append({'random_state': sd, 'erro': error})
 
         pred_test = best_rna.predict(X_test_norm)
         pred_test_denom = prc.denorm_data(y_train, pred_test)
         error_test = mean_squared_error(y_test, pred_test_denom)
         lst_results.append(error_test)
     
-    return lst_results, pred_test, pred_test_denom, X_test, y_test, best_rna
+    return lst_results, pred_test, pred_test_denom, X_test, y_test, best_rna, best_errors
 
 def forecast_svr(X, y, C_values, epsilon_values, gamma_values):
 
