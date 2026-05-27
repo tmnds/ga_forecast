@@ -10,12 +10,14 @@ class MLP():
 
     def __init__(self, input_windows, target_values):
 
+        self.input_windows = input_windows
+        self.target_values = target_values
+
         self.hidden_neurons = [10,20,30,40]
         self.learning_rate = [0.1, 0.01, 0.001]
         self.activation = ['logistic','tanh','relu']
         self.solver = 'sgd'
-        self.input_windows = input_windows
-        self.target_values = target_values
+        
         self.lst_results = []
         self.best_errors_list = []
         self.best_error = float('inf')
@@ -38,6 +40,9 @@ class MLP():
             'test_window_norm': test_window_norm,
             'train_target_norm': train_target_norm,
             'valid_target_norm': valid_target_norm,
+            
+            'test_window': test_window,
+            'train_target': train_target,
             'test_target': test_target
         }
         
@@ -46,16 +51,22 @@ class MLP():
         if error < self.best_error:
             self.best_rna = rna
             self.best_error = error
-            self.best_errors_list.append({'erro': error,'params': self.best_rna.get_params()})
+            self.best_errors_list.append({'erro': error, 'params': self.best_rna.get_params()})
         
-        return rna, error
+        # return self.best_rna, self.best_error
     
-    def get_predict(self, ):
+    def get_predict(self, normalized):
 
-        pred_test = best_rna.predict(test_window_norm)
-        pred_test_denom = prc.denorm_data(y_train, pred_test)
-        error_test = mean_squared_error(y_test, pred_test_denom)
-        lst_results.append(error_test)
+        pred_test = self.best_rna.predict(normalized['test_window_norm'])
+        pred_test_denom = prc.denorm_data(normalized['train_target'], pred_test)
+        error_test = mean_squared_error(normalized['test_target'], pred_test_denom)
+        self.lst_results.append(error_test)
+
+        return {
+            'pred_test': pred_test,
+            'pred_test_denom': pred_test_denom,
+            'error_test': error_test
+        }
 
     def grid_search(self, sd, normalized):
         
@@ -71,7 +82,9 @@ class MLP():
                     preds = rna.predict(normalized['valid_window_norm'])
                     error = mean_squared_error(normalized['valid_target_norm'], preds) 
 
-                    rna, error = self.get_best_error(self, error)
+                    rna, error = self.get_best_error(rna, error)
+        
+        return rna, error
     
     def train_model(self):
 
@@ -81,9 +94,20 @@ class MLP():
         for i in range(jumps):
             sd=i
 
-            grid = grid_search(self, sd, normalized)    
+            self.grid_search(sd, normalized)   
+            predict = self.get_predict(normalized) 
+        
+        return {
+            
+            'lst_results': self.lst_results,
+            'pred_test': predict['pred_test'],
+            'pred_test_denom': predict['pred_test_denom'],
+            'test_window': normalized['test_window'],
+            'test_target': normalized['test_target'],
+            'best_rna': self.best_rna,
+            'best_errors_list': self.best_errors_list
+        }
 
-        pass
 
 def forecast_mlp(X, y, solver, hidden_neurons, learning_rate, activation, jumps):
 
