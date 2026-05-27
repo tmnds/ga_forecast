@@ -6,6 +6,85 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
 
+class MLP():
+
+    def __init__(self, input_windows, target_values):
+
+        self.hidden_neurons = [10,20,30,40]
+        self.learning_rate = [0.1, 0.01, 0.001]
+        self.activation = ['logistic','tanh','relu']
+        self.solver = 'sgd'
+        self.input_windows = input_windows
+        self.target_values = target_values
+        self.lst_results = []
+        self.best_errors_list = []
+        self.best_error = float('inf')
+        self.best_rna = None
+    
+    def normalize_data(self):
+
+        # Split Temporal os dados
+        train_window, valid_window, test_window, train_target, valid_target, test_target = prc.split_dataset(self.input_windows, self.target_values)
+
+        # Normalização das janelas
+        train_window_norm, valid_window_norm, test_window_norm = prc.norm_X_dataset(train_window, valid_window, test_window)
+       
+        # Normalização de Alvos
+        train_target_norm, valid_target_norm = prc.norm_y_dataset(train_target, valid_target)
+        
+        return {
+            'train_window_norm': train_window_norm,
+            'valid_window_norm': valid_window_norm,
+            'test_window_norm': test_window_norm,
+            'train_target_norm': train_target_norm,
+            'valid_target_norm': valid_target_norm,
+            'test_target': test_target
+        }
+        
+    def get_best_error(self, rna, error):
+
+        if error < self.best_error:
+            self.best_rna = rna
+            self.best_error = error
+            self.best_errors_list.append({'erro': error,'params': self.best_rna.get_params()})
+        
+        return rna, error
+    
+    def get_predict(self, ):
+
+        pred_test = best_rna.predict(test_window_norm)
+        pred_test_denom = prc.denorm_data(y_train, pred_test)
+        error_test = mean_squared_error(y_test, pred_test_denom)
+        lst_results.append(error_test)
+
+    def grid_search(self, sd, normalized):
+        
+        h = []
+
+        for h in self.hidden_neurons:
+            for l in self.learning_rate:
+                for a in self.activation:
+                    rna = MLPRegressor(hidden_layer_sizes=(h,),learning_rate_init=l,activation=a,shuffle=False, random_state=sd, solver=self.solver)
+                    
+                    rna.fit(normalized['train_window_norm'],normalized['train_target_norm']) # Treina o modelo com os dados de treinamento
+
+                    preds = rna.predict(normalized['valid_window_norm'])
+                    error = mean_squared_error(normalized['valid_target_norm'], preds) 
+
+                    rna, error = self.get_best_error(self, error)
+    
+    def train_model(self):
+
+        jumps = 10
+        normalized = self.normalize_data()
+
+        for i in range(jumps):
+            sd=i
+
+            grid = grid_search(self, sd, normalized)    
+
+        pass
+
 def forecast_mlp(X, y, solver, hidden_neurons, learning_rate, activation, jumps):
 
     lst_results =[]
@@ -16,7 +95,7 @@ def forecast_mlp(X, y, solver, hidden_neurons, learning_rate, activation, jumps)
     X_train_norm, X_valid_norm, X_test_norm = prc.norm_X_dataset(X_train, X_valid, X_test)
     y_train_norm, y_valid_norm = prc.norm_y_dataset(y_train, y_valid)
 
-    best_errors = []
+    best_errors_list = []
 
     best_error = float('inf')
     best_rna = None
@@ -37,14 +116,15 @@ def forecast_mlp(X, y, solver, hidden_neurons, learning_rate, activation, jumps)
 
                     if error < best_error:
                         best_rna = rna
-                        best_errors.append({'random_state': sd, 'erro': error})
+                        best_error = error
+                        best_errors_list.append({'erro': error,'params': best_rna.get_params()})
 
         pred_test = best_rna.predict(X_test_norm)
         pred_test_denom = prc.denorm_data(y_train, pred_test)
         error_test = mean_squared_error(y_test, pred_test_denom)
         lst_results.append(error_test)
     
-    return lst_results, pred_test, pred_test_denom, X_test, y_test, best_rna, best_errors
+    return lst_results, pred_test, pred_test_denom, X_test, y_test, best_rna, best_errors_list
 
 def forecast_svr(X, y, C_values, epsilon_values, gamma_values):
 
