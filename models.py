@@ -46,14 +46,13 @@ class MLP():
             'test_target': test_target
         }
         
-    def get_best_error(self, rna, error):
+    def update_best_model(self, rna, error):
 
         if error < self.best_error:
+
             self.best_rna = rna
             self.best_error = error
             self.best_errors_list.append({'erro': error, 'params': self.best_rna.get_params()})
-        
-        # return self.best_rna, self.best_error
     
     def get_predict(self, normalized):
 
@@ -82,10 +81,8 @@ class MLP():
                     preds = rna.predict(normalized['valid_window_norm'])
                     error = mean_squared_error(normalized['valid_target_norm'], preds) 
 
-                    rna, error = self.get_best_error(rna, error)
+                    self.update_best_model(rna, error)
         
-        return rna, error
-    
     def train_model(self):
 
         jumps = 10
