@@ -77,24 +77,25 @@ class MLP():
     def normalize_data(self):
 
         # Split Temporal os dados
-        train_window, valid_window, test_window, train_target, valid_target, test_target = prc.split_dataset(self.input_windows, self.target_values)
+        input_train, input_valid, input_test, target_train, target_valid, target_test = prc.split_dataset(self.input_windows, self.target_values)
 
         # Normalização das janelas
-        train_window_norm, valid_window_norm, test_window_norm = prc.norm_X_dataset(train_window, valid_window, test_window)
+        input_train_norm, input_valid_norm, input_test_norm = prc.norm_X_dataset(input_train, input_valid, input_test)
        
         # Normalização de Alvos
-        train_target_norm, valid_target_norm = prc.norm_y_dataset(train_target, valid_target)
+        target_train_norm, target_valid_norm = prc.norm_y_dataset(target_train, target_valid)
         
         return {
-            'train_window_norm': train_window_norm,
-            'valid_window_norm': valid_window_norm,
-            'test_window_norm': test_window_norm,
-            'train_target_norm': train_target_norm,
-            'valid_target_norm': valid_target_norm,
+            'input_train_norm': input_train_norm,
+            'input_valid_norm': input_valid_norm,
+            'input_test_norm': input_test_norm,
+            'target_train_norm': target_train_norm,
+            'target_valid_norm': target_valid_norm,
             
-            'test_window': test_window,
-            'train_target': train_target,
-            'test_target': test_target
+            'input_test': input_test,
+
+            'target_train': target_train,
+            'target_test': target_test
         }
         
     def update_best_model(self, rna, error):
@@ -103,13 +104,14 @@ class MLP():
 
             self.best_rna = rna
             self.best_error = error
+            
             self.best_errors_list.append({'erro': error, 'params': self.best_rna.get_params()})
     
     def get_predict(self, normalized):
 
-        pred_test = self.best_rna.predict(normalized['test_window_norm'])
-        pred_test_denom = prc.denorm_data(normalized['train_target'], pred_test)
-        error_test = mean_squared_error(normalized['test_target'], pred_test_denom)
+        pred_test = self.best_rna.predict(normalized['input_test_norm'])
+        pred_test_denom = prc.denorm_data(normalized['target_train'], pred_test)
+        error_test = mean_squared_error(normalized['target_test'], pred_test_denom)
         self.lst_results.append(error_test)
 
         return {
@@ -127,10 +129,10 @@ class MLP():
                 for a in self.activation:
                     rna = MLPRegressor(hidden_layer_sizes=(h,),learning_rate_init=l,activation=a,shuffle=False, random_state=sd, solver=self.solver)
                     
-                    rna.fit(normalized['train_window_norm'],normalized['train_target_norm']) # Treina o modelo com os dados de treinamento
+                    rna.fit(normalized['input_train_norm'],normalized['target_train_norm']) # Treina o modelo com os dados de treinamento
 
-                    preds = rna.predict(normalized['valid_window_norm'])
-                    error = mean_squared_error(normalized['valid_target_norm'], preds) 
+                    preds = rna.predict(normalized['input_valid_norm'])
+                    error = mean_squared_error(normalized['target_valid_norm'], preds) 
 
                     self.update_best_model(rna, error)
         
@@ -150,8 +152,8 @@ class MLP():
             'lst_results': self.lst_results,
             'pred_test': predict['pred_test'],
             'pred_test_denom': predict['pred_test_denom'],
-            'test_window': normalized['test_window'],
-            'test_target': normalized['test_target'],
+            'input_test': normalized['input_test'],
+            'target_test': normalized['target_test'],
             'best_rna': self.best_rna,
             'best_errors_list': self.best_errors_list
         }
@@ -379,44 +381,44 @@ class Model(BaseEstimator, RegressorMixin):
 
 
 # Descontinuado
-def forecast_mlp(X, y, solver, hidden_neurons, learning_rate, activation, jumps):
+# def forecast_mlp(X, y, solver, hidden_neurons, learning_rate, activation, jumps):
 
-    lst_results =[]
+#     lst_results =[]
 
-    # Divisão do dataset e Normalizaçao
-    X_train, X_valid, X_test, y_train, y_valid, y_test = prc.split_dataset(X, y)
+#     # Divisão do dataset e Normalizaçao
+#     X_train, X_valid, X_test, y_train, y_valid, y_test = prc.split_dataset(X, y)
 
-    X_train_norm, X_valid_norm, X_test_norm = prc.norm_X_dataset(X_train, X_valid, X_test)
-    y_train_norm, y_valid_norm = prc.norm_y_dataset(y_train, y_valid)
+#     X_train_norm, X_valid_norm, X_test_norm = prc.norm_X_dataset(X_train, X_valid, X_test)
+#     y_train_norm, y_valid_norm = prc.norm_y_dataset(y_train, y_valid)
 
-    best_errors_list = []
+#     best_errors_list = []
 
-    best_error = float('inf')
-    best_rna = None
+#     best_error = float('inf')
+#     best_rna = None
 
-    for i in range(jumps):
-        sd=i
+#     for i in range(jumps):
+#         sd=i
 
-        for h in hidden_neurons:
-            for l in learning_rate:
-                for a in activation:
-                    #[NEURON ESCONDIDOS, TAXA DE APRENDIZADO, FUNCAO DE ATIVACAO]
-                    rna = MLPRegressor(hidden_layer_sizes=(h,),learning_rate_init=l,activation=a,shuffle=False, random_state=sd, solver=solver)
+#         for h in hidden_neurons:
+#             for l in learning_rate:
+#                 for a in activation:
+#                     #[NEURON ESCONDIDOS, TAXA DE APRENDIZADO, FUNCAO DE ATIVACAO]
+#                     rna = MLPRegressor(hidden_layer_sizes=(h,),learning_rate_init=l,activation=a,shuffle=False, random_state=sd, solver=solver)
                     
-                    rna.fit(X_train_norm,y_train_norm) # Treina o modelo com os dados de treinamento
+#                     rna.fit(X_train_norm,y_train_norm) # Treina o modelo com os dados de treinamento
 
-                    preds = rna.predict(X_valid_norm)
-                    error = mean_squared_error(y_valid_norm, preds) 
+#                     preds = rna.predict(X_valid_norm)
+#                     error = mean_squared_error(y_valid_norm, preds) 
 
-                    if error < best_error:
-                        best_rna = rna
-                        best_error = error
-                        best_errors_list.append({'erro': error,'params': best_rna.get_params()})
+#                     if error < best_error:
+#                         best_rna = rna
+#                         best_error = error
+#                         best_errors_list.append({'erro': error,'params': best_rna.get_params()})
 
-        pred_test = best_rna.predict(X_test_norm)
-        pred_test_denom = prc.denorm_data(y_train, pred_test)
-        error_test = mean_squared_error(y_test, pred_test_denom)
-        lst_results.append(error_test)
+#         pred_test = best_rna.predict(X_test_norm)
+#         pred_test_denom = prc.denorm_data(y_train, pred_test)
+#         error_test = mean_squared_error(y_test, pred_test_denom)
+#         lst_results.append(error_test)
     
-    return lst_results, pred_test, pred_test_denom, X_test, y_test, best_rna, best_errors_list
+#     return lst_results, pred_test, pred_test_denom, X_test, y_test, best_rna, best_errors_list
 
