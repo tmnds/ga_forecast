@@ -14,60 +14,25 @@ from sklearn.preprocessing import MinMaxScaler
 # This will suppress ALL FutureWarning messages
 warnings.simplefilter(action='ignore', category=RuntimeWarning)
 
-def mean_square_error(y_true, y_pred):
-    y_true = np.asmatrix(y_true).reshape(-1)
-    y_pred = np.asmatrix(y_pred).reshape(-1)
-
-    return np.square(np.subtract(y_true, y_pred)).mean()
-
-def root_mean_square_error(y_true, y_pred):
-
-    return mean_square_error(y_true, y_pred)**0.5
-
-def sigmoid(x):
-    # Função de ativação Sigmoid.
-    # Transforma o valor de entrada para um valor entre 0 e 1.
-    return 1 / (1 + np.exp(-x))
-
-def linear(x):
-    """
-    Função de ativação Linear.
-    A saída é exatamente igual à entrada (nenhuma transformação).
-    """
-    return x
-
-def calculate_h(X, omega, b, act_fuction):
-    """
-    Calcula a saída de um único neurônio oculto (h_L(X)).
-    Assumimos que omega é um vetor coluna e X é uma matriz de entrada.
-    """
-    # (X @ omega) realiza o produto escalar de cada linha de X com omega
-    # O resultado é um vetor de saídas para cada amostra
-    return act_fuction(X @ omega + b)
-
-def transform_verify_numpy(array):
-    if (
-        (isinstance(array, pd.DataFrame)) or 
-        (isinstance(array, pd.Series))
-        ):
-        array = array.to_numpy()
-
-    if not isinstance(array, np.ndarray):
-        raise NotImplementedError("inputs e outputs need to be pd.Dataframe or np.ndarray")
-    
-    return array
-
 class MLP():
 
-    def __init__(self, input_windows, target_values):
+    def __init__(
+            self, 
+            input_windows, 
+            target_values,
+            hidden_neurons = [10,20,30,40],
+            learning_rate = [0.1, 0.01, 0.001],
+            activation = ['logistic','tanh','relu'],
+            solver = 'sgd'
+        ):
 
         self.input_windows = input_windows
         self.target_values = target_values
 
-        self.hidden_neurons = [10,20,30,40]
-        self.learning_rate = [0.1, 0.01, 0.001]
-        self.activation = ['logistic','tanh','relu']
-        self.solver = 'sgd'
+        self.hidden_neurons = hidden_neurons
+        self.learning_rate = learning_rate
+        self.activation = activation
+        self.solver = solver
         
         self.lst_results = []
         self.best_errors_list = []
@@ -86,14 +51,12 @@ class MLP():
         target_train_norm, target_valid_norm = prc.norm_y_dataset(target_train, target_valid)
         
         return {
+            'input_test': input_test,
             'input_train_norm': input_train_norm,
             'input_valid_norm': input_valid_norm,
             'input_test_norm': input_test_norm,
             'target_train_norm': target_train_norm,
             'target_valid_norm': target_valid_norm,
-            
-            'input_test': input_test,
-
             'target_train': target_train,
             'target_test': target_test
         }
@@ -158,6 +121,48 @@ class MLP():
             'best_errors_list': self.best_errors_list
         }
 
+def mean_square_error(y_true, y_pred):
+    y_true = np.asmatrix(y_true).reshape(-1)
+    y_pred = np.asmatrix(y_pred).reshape(-1)
+
+    return np.square(np.subtract(y_true, y_pred)).mean()
+
+def root_mean_square_error(y_true, y_pred):
+
+    return mean_square_error(y_true, y_pred)**0.5
+
+def sigmoid(x):
+    # Função de ativação Sigmoid.
+    # Transforma o valor de entrada para um valor entre 0 e 1.
+    return 1 / (1 + np.exp(-x))
+
+def linear(x):
+    """
+    Função de ativação Linear.
+    A saída é exatamente igual à entrada (nenhuma transformação).
+    """
+    return x
+
+def calculate_h(X, omega, b, act_fuction):
+    """
+    Calcula a saída de um único neurônio oculto (h_L(X)).
+    Assumimos que omega é um vetor coluna e X é uma matriz de entrada.
+    """
+    # (X @ omega) realiza o produto escalar de cada linha de X com omega
+    # O resultado é um vetor de saídas para cada amostra
+    return act_fuction(X @ omega + b)
+
+def transform_verify_numpy(array):
+    if (
+        (isinstance(array, pd.DataFrame)) or 
+        (isinstance(array, pd.Series))
+        ):
+        array = array.to_numpy()
+
+    if not isinstance(array, np.ndarray):
+        raise NotImplementedError("inputs e outputs need to be pd.Dataframe or np.ndarray")
+    
+    return array
 class SCN_III(BaseEstimator, RegressorMixin):
 
     def __init__(self, 
@@ -282,7 +287,7 @@ class SCN_III(BaseEstimator, RegressorMixin):
 
         return predictions
 
-class Model(BaseEstimator, RegressorMixin):
+class ELM(BaseEstimator, RegressorMixin):
     model = None
 
 
