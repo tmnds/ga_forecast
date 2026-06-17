@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import copy as cp
 
-import processing as prc
+import conf.processing as prc
 
 from sklearn.metrics import mean_squared_error
 from sklearn.neural_network import MLPRegressor
@@ -14,112 +14,6 @@ from sklearn.preprocessing import MinMaxScaler
 # This will suppress ALL FutureWarning messages
 warnings.simplefilter(action='ignore', category=RuntimeWarning)
 
-class MLP():
-
-    def __init__(
-            self, 
-            input_windows, 
-            target_values,
-            hidden_neurons = [10,20,30,40],
-            learning_rate = [0.1, 0.01, 0.001],
-            activation = ['logistic','tanh','relu'],
-            solver = 'sgd'
-        ):
-
-        self.input_windows = input_windows
-        self.target_values = target_values
-
-        self.hidden_neurons = hidden_neurons
-        self.learning_rate = learning_rate
-        self.activation = activation
-        self.solver = solver
-        
-        self.lst_results = []
-        self.best_errors_list = []
-        self.best_error = float('inf')
-        self.best_rna = None
-    
-    def normalize_data(self):
-
-        # Split Temporal os dados
-        input_train, input_valid, input_test, target_train, target_valid, target_test = prc.split_dataset(self.input_windows, self.target_values)
-
-        # Normalização das janelas
-        input_train_norm, input_valid_norm, input_test_norm = prc.norm_X_dataset(input_train, input_valid, input_test)
-       
-        # Normalização de Alvos
-        target_train_norm, target_valid_norm = prc.norm_y_dataset(target_train, target_valid)
-        
-        return {
-            'input_test': input_test,
-            'input_train_norm': input_train_norm,
-            'input_valid_norm': input_valid_norm,
-            'input_test_norm': input_test_norm,
-            'target_train_norm': target_train_norm,
-            'target_valid_norm': target_valid_norm,
-            'target_train': target_train,
-            'target_test': target_test
-        }
-        
-    def update_best_model(self, rna, error):
-
-        if error < self.best_error:
-
-            self.best_rna = rna
-            self.best_error = error
-            
-            self.best_errors_list.append({'erro': error, 'params': self.best_rna.get_params()})
-    
-    def get_predict(self, normalized):
-
-        pred_test = self.best_rna.predict(normalized['input_test_norm'])
-        pred_test_denom = prc.denorm_data(normalized['target_train'], pred_test)
-        error_test = mean_squared_error(normalized['target_test'], pred_test_denom)
-        self.lst_results.append(error_test)
-
-        return {
-            'pred_test': pred_test,
-            'pred_test_denom': pred_test_denom,
-            'error_test': error_test
-        }
-
-    def grid_search(self, sd, normalized):
-        
-        h = []
-
-        for h in self.hidden_neurons:
-            for l in self.learning_rate:
-                for a in self.activation:
-                    rna = MLPRegressor(hidden_layer_sizes=(h,),learning_rate_init=l,activation=a,shuffle=False, random_state=sd, solver=self.solver)
-                    
-                    rna.fit(normalized['input_train_norm'],normalized['target_train_norm']) # Treina o modelo com os dados de treinamento
-
-                    preds = rna.predict(normalized['input_valid_norm'])
-                    error = mean_squared_error(normalized['target_valid_norm'], preds) 
-
-                    self.update_best_model(rna, error)
-        
-    def train_model(self):
-
-        jumps = 10
-        normalized = self.normalize_data()
-
-        for i in range(jumps):
-            sd=i
-
-            self.grid_search(sd, normalized)   
-            predict = self.get_predict(normalized) 
-        
-        return {
-            
-            'lst_results': self.lst_results,
-            'pred_test': predict['pred_test'],
-            'pred_test_denom': predict['pred_test_denom'],
-            'input_test': normalized['input_test'],
-            'target_test': normalized['target_test'],
-            'best_rna': self.best_rna,
-            'best_errors_list': self.best_errors_list
-        }
 
 def mean_square_error(y_true, y_pred):
     y_true = np.asmatrix(y_true).reshape(-1)
@@ -163,6 +57,91 @@ def transform_verify_numpy(array):
         raise NotImplementedError("inputs e outputs need to be pd.Dataframe or np.ndarray")
     
     return array
+class MLP():
+    '''
+        Comentário sobre o Multilayer Perceptron
+    '''
+
+    def __init__(
+            self, 
+            hidden_neurons = [10,20,30,40],
+            learning_rate = [0.1, 0.01, 0.001],
+            activation = ['logistic','tanh','relu'],
+            solver = 'sgd'
+        ):
+
+        self.hidden_neurons = hidden_neurons
+        self.learning_rate = learning_rate
+        self.activation = activation
+        self.solver = solver
+
+        self.current_seed = None
+        
+        self.lst_results = []
+        self.best_errors_list = []
+        self.best_error = float('inf')
+        self.best_rna = None
+    
+    def update_best_model(self, rna, error):
+
+        if error < self.best_error:
+
+            self.best_rna = rna
+            self.best_error = error
+            
+            self.best_errors_list.append({'erro': error, 'params': self.best_rna.get_params()})
+    
+    def get_predict(self, data):
+
+        pred_test = self.best_rna.predict(data['input_test_norm'])
+        pred_test_denom = prc.denorm_data(data['target_train'], pred_test)
+        error_test = mean_squared_error(data['target_test'], pred_test_denom)
+        self.lst_results.append(error_test)
+
+        return {
+            'pred_test': pred_test,
+            'pred_test_denom': pred_test_denom,
+            'error_test': error_test
+        }
+
+    def grid_search(self, data):
+        
+        h = []
+
+        for h in self.hidden_neurons:
+            for l in self.learning_rate:
+                for a in self.activation:
+                    rna = MLPRegressor(hidden_layer_sizes=(h,),learning_rate_init=l,activation=a,shuffle=False, random_state=self.current_seed, solver=self.solver)
+                    
+                    rna.fit(data['input_train_norm'],data['target_train_norm']) # Treina o modelo com os dados de treinamento
+
+                    preds = rna.predict(data['input_valid_norm'])
+                    error = mean_squared_error(data['target_valid_norm'], preds) 
+
+                    self.update_best_model(rna, error)
+        
+    def train(self, data):
+
+        seeds = 10
+
+        for sd in range(seeds):
+
+            self.current_seed = sd
+
+            self.grid_search(data)   
+            predict = self.get_predict(data) 
+        
+        return {
+            
+            'lst_results': self.lst_results,
+            'pred_test': predict['pred_test'],
+            'pred_test_denom': predict['pred_test_denom'],
+            'input_test': data['input_test'],
+            'target_test': data['target_test'],
+            'best_rna': self.best_rna,
+            'best_errors_list': self.best_errors_list
+        }
+
 class SCN_III(BaseEstimator, RegressorMixin):
 
     def __init__(self, 
