@@ -1,17 +1,31 @@
-# Inicialização - Opção usando código na mão
-
-# Aqui pode ser uma classe
 import numpy as np
 import random
 
-rng = np.random.default_rng()
+from sklearn.metrics import mean_squared_error
 
 class GA:
-    def __init__(self):
-        pass
+    def __init__(
+            self, 
+            y_test, 
+            max_size=20, 
+            generations=50, 
+            size_tournament=3
+        ):
 
+        self.y_test = y_test
 
-    def start_population(max_size):
+        self.max_size = max_size
+        self.generations = generations
+        self.size_tournament = size_tournament
+
+        self.best_ = []
+        self.population = []
+        self.ind_metrics = []
+        self.ind = []
+        self.epsilon = 1e-6
+        self.rng = np.random.default_rng()
+
+    def start_population(self, max_size):
         '''
         Inicialização
         Criação aleatória de um conjunto de soluções candidatas (população inicial).
@@ -26,25 +40,21 @@ class GA:
         # rng.dirichlet([1, 1, 1], size=20)
         
         '''
-        population = []
-        epsilon = 1e-6
 
         for _ in range(max_size):
 
-            ind = []
-
-            first_element = random.uniform(epsilon, 0.98)
-            second_element = random.uniform(epsilon, 1 - first_element - epsilon)
+            first_element = random.uniform(self.epsilon, 0.98)
+            second_element = random.uniform(self.epsilon, 1 - first_element - self.epsilon)
             third_element = 1 - (first_element + second_element)
 
-            ind = [first_element, second_element, third_element]
-            random.shuffle(ind)
+            self.ind = [first_element, second_element, third_element]
+            random.shuffle(self.ind)
 
-            population.append(ind)
+            self.population.append(self.ind)
 
-        return np.array(population)
+        return np.array(self.population)
 
-    def evaluate_population(y_test, y_hat):
+    def evaluate_population(self, y_test, y_hat):
 
         '''
         2. Avaliação
@@ -54,15 +64,13 @@ class GA:
         Nesse processo, os individuos inicializados serão executados em cada modelo e avaliados de acordo com o resultado do fitness utilizado.
         
         '''
-        ind_metrics = []
-
-        for _ in range(y_hat.shape[1]):
+        for _ in range(self.y_hat.shape[1]):
             fitness = 1 / mean_squared_error(y_test, y_hat[:,_])
-            ind_metrics.append(fitness)
+            self.ind_metrics.append(fitness)
 
-        return ind_metrics
+        return self.ind_metrics
 
-    def tournament_selection(population, fitness, size_tournament):
+    def tournament_selection(self, population, fitness, size_tournament):
         '''
         # 3. Seleção
         # Alguns dos melhores candidatos são escolhidos.
@@ -77,7 +85,9 @@ class GA:
         selected = []
 
         for _ in range(n_population):
-            participants = random.sample( range(len(population)), size_tournament )
+            participants = random.sample( 
+                range( len(population) ), size_tournament 
+            )
 
             winner = participants[0]
             for i in range(1, size_tournament):
@@ -89,7 +99,7 @@ class GA:
         return selected
 
 
-    def crossover(selected_parents):
+    def crossover(self, selected_parents):
         '''
         Cruzamento (Recombinação)
         
@@ -108,7 +118,7 @@ class GA:
         
         return new_generation
 
-    def mutation(offspring):
+    def mutation(self, offspring):
         '''
         Mutação
         - Pequenas alterações aleatórias são introduzidas em alguns indivíduos.
@@ -136,34 +146,36 @@ class GA:
         
         return np.array(offspring)
 
-    def renormalizar():
-        """
-        # Normalização para garantir que a soma dos pesos seja igual a 1?
-        # new = child_1 / sum(child_1) 
-        De acordo com Domingos, nesse passo eu devo - Garantir que os somatórios dos pesos sejam iguais a 1
-        """
-        pass
+    # def renormalizar():
+    #     """
+    #     # Normalização para garantir que a soma dos pesos seja igual a 1?
+    #     # new = child_1 / sum(child_1) 
+    #     De acordo com Domingos, nesse passo eu devo - Garantir que os somatórios dos pesos sejam iguais a 1
+    #     """
+    #     pass
 
-    def genetic_algorithm(P, y_test):
+    def execute_ga(self, P, y_test):
         '''
         '''
 
-        W = start_population(20)
-        best_ = []
+        W = self.start_population(self.max_size)
 
-        for generation in range(50):
+        for _ in range(self.generations):
             y_hat = P @ W.T
-            fitness = evaluate_population(y_test, y_hat)
-            best_.append((max(fitness)))
+            fitness = self.evaluate_population(y_test, y_hat)
+            self.best_.append((max(fitness)))
 
 
-            selected = tournament_selection(W, fitness, 3)
-            new_generation = crossover(selected)
-            W = mutation(new_generation)
+            selected_parents = self.tournament_selection(
+                W, 
+                fitness, 
+                self.size_tournament
+            )
+            new_generation = self.crossover(selected_parents)
+            W = self.mutation(new_generation)
         
         y_hat = P @ W.T
-        fitness = evaluate_population(y_test, y_hat)
-        c
+        fitness = self.evaluate_population(y_test, y_hat)
 
         best_ind = W[best_idx]
         best_fit = fitness[best_idx]
@@ -171,6 +183,6 @@ class GA:
         # best_ind = max(y_hat, key=evaluate_population(y_test, y_hat))
         # fitness = evaluate_population(y_test, y_hat)
 
-        return best_, best_ind, best_fit
+        return self.best_, best_ind, best_fit
 
     

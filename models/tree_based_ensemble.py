@@ -54,8 +54,6 @@ class RF(BaseModel):
             
             'lst_results': self.lst_results,
             'pred_test': predict['pred_test'],
-            'input_test': data['input_test'],
-            'target_test': data['target_test'],
             'best_rf': self.best_model,
             'best_errors_list': self.best_errors_list
         }
@@ -112,11 +110,8 @@ class GBoosting(BaseModel):
             predict = self.get_predict(data) 
         
         return {
-            
             'lst_results': self.lst_results,
             'pred_test': predict['pred_test'],
-            'input_test': data['input_test'],
-            'target_test': data['target_test'],
             'best_gb': self.best_model,
             'best_errors_list': self.best_errors_list
         }

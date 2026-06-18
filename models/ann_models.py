@@ -123,8 +123,6 @@ class MLP(BaseModel):
             'lst_results': self.lst_results,
             'pred_test': predict['pred_test'],
             'pred_test_denom': predict['pred_test_denom'],
-            'input_test': data['input_test'],
-            'target_test': data['target_test'],
             'best_rna': self.best_model,
             'best_errors_list': self.best_errors_list
         }

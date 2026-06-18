@@ -54,8 +54,6 @@ class SVM(BaseModel):
             
             'lst_results': self.lst_results,
             'pred_test': predict['pred_test'],
-            'input_test': data['input_test'],
-            'target_test': data['target_test'],
             'best_svr': self.best_model,
             'best_errors_list': self.best_errors_list
         }
