@@ -61,3 +61,46 @@ em construção
 ```Notebook 3
 em construção
 ```
+
+
+## Infos Gerais
+
+<!-- # GA para SVR - No SVR não há pesos para otimizar, mas pode atuar diretamente nos hiperparâmetros (C, epsilon, gamma) para melhorar a performance. O processo é similar ao do MLP, mas o cromossomo representa uma combinação de hiperparâmetros em vez de pesos da rede. O GA busca a melhor combinação que minimize o erro de previsão no conjunto de validação.
+
+# cromossomo = [C, epsilon, gamma]
+# fitness    = -RMSE no conjunto de validação
+# GA busca a melhor combinação desses três valores
+
+# Sem GA — busca manual 
+# for c in [0.1, 1, 10, 100]:
+#     for e in [0.01, 0.05, 0.1]:
+#         for g in ['scale', 0.01, 0.1]:
+#             ...  # 36 combinações fixas
+
+# Com GA — busca contínua e inteligente
+# cromossomo = [C=7.3, epsilon=0.032, gamma=0.07]
+# GA explora o espaço contínuo, não uma grade fixa -->
+
+# # Hiperparâmetros do SVR
+# C — penalidade por erro:
+
+# Controla o quanto o modelo penaliza pontos que ficam fora do tubo ε
+# C pequeno → modelo mais suave, aceita mais erros, pode underfit
+# C grande → modelo mais rígido, tenta acertar tudo, pode overfit
+# Valores típicos para começar: [0.1, 1, 10, 100]
+
+# epsilon — largura do tubo de tolerância:
+
+# Pontos dentro do tubo não contribuem para o erro — são ignorados
+# Epsilon pequeno → tubo estreito, modelo mais sensível a cada ponto
+# Epsilon grande → tubo largo, modelo mais suave
+# Valores típicos: [0.01, 0.05, 0.1, 0.5]
+# Regra prática: comece com 5-10% do desvio padrão do y de treino
+
+# gamma — curvatura do kernel RBF:
+
+# Controla o quanto cada ponto de treino influencia a curva
+# 'scale' → 1 / (n_features * X.var()) — automático
+# Gamma pequeno → curva mais suave, influência mais ampla
+# Gamma grande → curva mais irregular, influência localizada
+# Valores típicos: ['scale', 0.001, 0.01, 0.1, 1]

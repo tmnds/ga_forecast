@@ -83,17 +83,20 @@ class DataProcessing:
         target_train_norm, target_valid_norm = self.norm_y_dataset(target_train, target_valid)
         
         return {
+            'input_train': input_train,
+            'input_valid': input_valid,
             'input_test': input_test,
+
+            'target_train': target_train,
+            'target_valid': target_valid,
+            'target_test': target_test,
+            
 
             'input_train_norm': input_train_norm,
             'input_valid_norm': input_valid_norm,
             'input_test_norm': input_test_norm,
 
             'target_train_norm': target_train_norm,
-            'target_valid_norm': target_valid_norm,
-
-            'target_train': target_train,
-            'target_valid': target_valid,
-            'target_test': target_test
+            'target_valid_norm': target_valid_norm
         }
     

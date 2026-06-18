@@ -233,11 +233,11 @@ class SCN_III(BaseEstimator, RegressorMixin):
             l_i = l_i + 1
             efro = np.square(el).mean()
             self.error_list.append(efro)
-        
+                    
     def predict(self, X):
         x_test = X.copy()
-        x_test = transform_verify_numpy(x_test)
-        x_test_norm =  self.scaler_x.transform(x_test)
+        x_test_norm = transform_verify_numpy(x_test)
+        x_test_norm =  self.scaler_x.transform(x_test) # Aqui foi comentado Thales
 
         n_test_samples, _ = x_test_norm.shape
         #H_test = np.empty((N_test_samples, len(wstar_list))
@@ -251,6 +251,59 @@ class SCN_III(BaseEstimator, RegressorMixin):
 
         return predictions
 
+class GridSCN(BaseModel):
+
+    def __init__(self,
+                l_max = [5, 10, 20, 30],
+                t_max = [10],
+                r = [0.5, 0.7]
+                ):
+
+        super().__init__()
+         
+        self.l_max = l_max
+        self.t_max = t_max
+        self.r = r
+         
+
+    def grid_search(self, data):
+
+        for l in self.l_max:
+            for t in self.t_max:
+                for r in self.r:
+
+                    scn = SCN_III(
+                        l_max = l, 
+                        t_max = t, 
+                        r = r
+                    )
+                    
+                    scn.fit(
+                        data['input_train'], 
+                        data['target_train']
+                    )
+
+                    preds = scn.predict(
+                        data['input_valid']
+                        )
+                    
+                    error = mean_squared_error(
+                        data['target_valid'], preds
+                    )
+
+                    self.update_best_model(scn, error)
+
+    def train(self, data):
+
+        self.grid_search(data)
+        pred_test = self.best_model.predict(data['input_test'])
+        error_test = mean_squared_error(data['target_test'], pred_test)
+        self.lst_results.append(error_test)
+
+        return {
+            'pred_test': pred_test,
+            'error_test': error_test
+        }
 class ELM(BaseEstimator, RegressorMixin):
     model = None
 
@@ -347,3 +400,47 @@ class ELM(BaseEstimator, RegressorMixin):
         self.U, self.S, Vt = np.linalg.svd(H, full_matrices=False)
         self.V = np.matrix(Vt).T
         return np.matrix(self.U), np.matrix(self.S), np.matrix(self.V)
+class GridELM(BaseModel):
+
+    def __init__(self,
+                hidden_dim = [10, 20, 50, 100]
+                ):
+
+        super().__init__()
+         
+        self.hidden_dim = hidden_dim
+
+    def grid_search(self, data):
+
+        for h in self.hidden_dim:
+
+            elm = ELM(
+                hidden_dim = h
+            )
+            
+            elm.fit(
+                data['input_train'], 
+                data['target_train']
+            )
+
+            preds = elm.predict(
+                data['input_valid']
+                )
+            
+            error = mean_squared_error(
+                data['target_valid'], preds
+            )
+
+            self.update_best_model(elm, error)
+    
+    def train(self, data):
+
+        self.grid_search(data)
+        pred_test = self.best_model.predict(data['input_test'])
+        error_test = mean_squared_error(data['target_test'], pred_test)
+        self.lst_results.append(error_test)
+
+        return {
+            'pred_test': pred_test,
+            'error_test': error_test
+        }
