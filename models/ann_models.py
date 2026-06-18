@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import copy as cp
 
-import conf.processing as prc
+from conf.base_model import BaseModel
+from conf.processing import DataProcessing
 
 from sklearn.metrics import mean_squared_error
 from sklearn.neural_network import MLPRegressor
@@ -57,7 +58,7 @@ def transform_verify_numpy(array):
         raise NotImplementedError("inputs e outputs need to be pd.Dataframe or np.ndarray")
     
     return array
-class MLP():
+class MLP(BaseModel):
     '''
         Comentário sobre o Multilayer Perceptron
     '''
@@ -70,31 +71,17 @@ class MLP():
             solver = 'sgd'
         ):
 
+        super().__init__()
+        
         self.hidden_neurons = hidden_neurons
         self.learning_rate = learning_rate
         self.activation = activation
         self.solver = solver
 
-        self.current_seed = None
-        
-        self.lst_results = []
-        self.best_errors_list = []
-        self.best_error = float('inf')
-        self.best_rna = None
-    
-    def update_best_model(self, rna, error):
-
-        if error < self.best_error:
-
-            self.best_rna = rna
-            self.best_error = error
-            
-            self.best_errors_list.append({'erro': error, 'params': self.best_rna.get_params()})
-    
     def get_predict(self, data):
 
-        pred_test = self.best_rna.predict(data['input_test_norm'])
-        pred_test_denom = prc.denorm_data(data['target_train'], pred_test)
+        pred_test = self.best_model.predict(data['input_test_norm'])
+        pred_test_denom = DataProcessing.denorm_data(data['target_train'], pred_test)
         error_test = mean_squared_error(data['target_test'], pred_test_denom)
         self.lst_results.append(error_test)
 
@@ -138,7 +125,7 @@ class MLP():
             'pred_test_denom': predict['pred_test_denom'],
             'input_test': data['input_test'],
             'target_test': data['target_test'],
-            'best_rna': self.best_rna,
+            'best_rna': self.best_model,
             'best_errors_list': self.best_errors_list
         }
 
@@ -362,47 +349,3 @@ class ELM(BaseEstimator, RegressorMixin):
         self.U, self.S, Vt = np.linalg.svd(H, full_matrices=False)
         self.V = np.matrix(Vt).T
         return np.matrix(self.U), np.matrix(self.S), np.matrix(self.V)
-
-
-# Descontinuado
-# def forecast_mlp(X, y, solver, hidden_neurons, learning_rate, activation, jumps):
-
-#     lst_results =[]
-
-#     # Divisão do dataset e Normalizaçao
-#     X_train, X_valid, X_test, y_train, y_valid, y_test = prc.split_dataset(X, y)
-
-#     X_train_norm, X_valid_norm, X_test_norm = prc.norm_X_dataset(X_train, X_valid, X_test)
-#     y_train_norm, y_valid_norm = prc.norm_y_dataset(y_train, y_valid)
-
-#     best_errors_list = []
-
-#     best_error = float('inf')
-#     best_rna = None
-
-#     for i in range(jumps):
-#         sd=i
-
-#         for h in hidden_neurons:
-#             for l in learning_rate:
-#                 for a in activation:
-#                     #[NEURON ESCONDIDOS, TAXA DE APRENDIZADO, FUNCAO DE ATIVACAO]
-#                     rna = MLPRegressor(hidden_layer_sizes=(h,),learning_rate_init=l,activation=a,shuffle=False, random_state=sd, solver=solver)
-                    
-#                     rna.fit(X_train_norm,y_train_norm) # Treina o modelo com os dados de treinamento
-
-#                     preds = rna.predict(X_valid_norm)
-#                     error = mean_squared_error(y_valid_norm, preds) 
-
-#                     if error < best_error:
-#                         best_rna = rna
-#                         best_error = error
-#                         best_errors_list.append({'erro': error,'params': best_rna.get_params()})
-
-#         pred_test = best_rna.predict(X_test_norm)
-#         pred_test_denom = prc.denorm_data(y_train, pred_test)
-#         error_test = mean_squared_error(y_test, pred_test_denom)
-#         lst_results.append(error_test)
-    
-#     return lst_results, pred_test, pred_test_denom, X_test, y_test, best_rna, best_errors_list
-

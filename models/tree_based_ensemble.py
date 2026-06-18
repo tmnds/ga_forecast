@@ -11,6 +11,8 @@ class RF(BaseModel):
                 max_depth_values = [None, 5, 10, 20]
                 ):
 
+        super().__init__()
+
         self.n_estimators_values = n_estimators_values
         self.max_depth_values = max_depth_values
 
@@ -29,7 +31,7 @@ class RF(BaseModel):
     
     def get_predict(self, data):
         
-        pred_test = self.best_rf.predict(data['input_test_norm'])
+        pred_test = self.best_model.predict(data['input_test_norm'])
         error_test = mean_squared_error(data['target_test'], pred_test)
         self.lst_results.append(error_test)
 
@@ -54,10 +56,10 @@ class RF(BaseModel):
             'pred_test': predict['pred_test'],
             'input_test': data['input_test'],
             'target_test': data['target_test'],
-            'best_rf': self.best_rf,
+            'best_rf': self.best_model,
             'best_errors_list': self.best_errors_list
         }
-class GBoosting():
+class GBoosting(BaseModel):
     '''
         Comentário Sobre o Gradient Boosting
 
@@ -68,24 +70,11 @@ class GBoosting():
                 learning_rate_values = [0.01, 0.05, 0.1]
                 ):
 
+        super().__init__()
+
         self.n_estimators_values = n_estimators_values
         self.max_depth_values = max_depth_values
         self.learning_rate_values = learning_rate_values
-
-        self.lst_results = []
-        self.best_errors_list = []
-        self.best_error = float('inf')
-        self.best_gb = None
-        self.current_seed = None
-
-    def update_best_model(self, gb, error):
-        
-        if error < self.best_error:
-
-            self.best_gb = gb
-            self.best_error = error
-            
-            self.best_errors_list.append({'erro': error, 'params': self.best_gb.get_params()})
 
     def grid_search(self, data):
 
@@ -98,11 +87,12 @@ class GBoosting():
 
                     preds = gb.predict(data['input_valid_norm'])
                     error = mean_squared_error(data['target_valid'], preds)
+
                     self.update_best_model(gb, error)
     
     def get_predict(self, data):
         
-        pred_test = self.best_gb.predict(data['input_test_norm'])
+        pred_test = self.best_model.predict(data['input_test_norm'])
         error_test = mean_squared_error(data['target_test'], pred_test)
         self.lst_results.append(error_test)
 
@@ -127,6 +117,6 @@ class GBoosting():
             'pred_test': predict['pred_test'],
             'input_test': data['input_test'],
             'target_test': data['target_test'],
-            'best_gb': self.best_gb,
+            'best_gb': self.best_model,
             'best_errors_list': self.best_errors_list
         }

@@ -1,9 +1,8 @@
-import conf.processing as prc
-
 from sklearn.metrics import mean_squared_error
 from sklearn.svm import SVR
+from conf.base_model import BaseModel
 
-class SVM:
+class SVM(BaseModel):
     '''
         Comentário sobre o Support Vector Machine
     
@@ -14,26 +13,15 @@ class SVM:
                 gamma_values = ['scale', 0.01, 0.1]
                 ):
 
+        super().__init__()
+        
         self.C_values = C_values
         self.epsilon_values = epsilon_values
         self.gamma_values = gamma_values
 
-        self.lst_results = []
-        self.best_errors_list = []
-        self.best_error = float('inf')
-        self.best_svr = None
-
-    def update_best_model(self, svr, error):
-        
-        if error < self.best_error:
-
-            self.best_svr = svr
-            self.best_error = error
-            self.best_errors_list.append({'erro': error, 'params': self.best_svr.get_params()})
-
     def get_predict(self, data):
         
-        pred_test = self.best_svr.predict(data['input_test_norm'])
+        pred_test = self.best_model.predict(data['input_test_norm'])
         error_test = mean_squared_error(data['target_test'], pred_test)
         self.lst_results.append(error_test)
 
@@ -68,6 +56,6 @@ class SVM:
             'pred_test': predict['pred_test'],
             'input_test': data['input_test'],
             'target_test': data['target_test'],
-            'best_svr': self.best_svr,
+            'best_svr': self.best_model,
             'best_errors_list': self.best_errors_list
         }
