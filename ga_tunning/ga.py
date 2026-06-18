@@ -8,6 +8,7 @@ class GA:
             self, 
             y_test, 
             max_size=20, 
+            max_genes=6,
             generations=50, 
             size_tournament=3
         ):
@@ -15,17 +16,18 @@ class GA:
         self.y_test = y_test
 
         self.max_size = max_size
+        self.max_genes = max_genes
         self.generations = generations
         self.size_tournament = size_tournament
 
         self.best_ = []
         self.population = []
         self.ind_metrics = []
-        self.ind = []
+        # self.ind = []
         self.epsilon = 1e-6
         self.rng = np.random.default_rng()
 
-    def start_population(self, max_size):
+    def start_population(self):
         '''
         Inicialização
         Criação aleatória de um conjunto de soluções candidatas (população inicial).
@@ -36,21 +38,27 @@ class GA:
         pesos deve ser igual a 1.
 
         # # Opção usando NumPy - dirichlet
-        # rng = np.random.default_rng()
-        # rng.dirichlet([1, 1, 1], size=20)
+        # gene = np.random.dirichlet(
+        #         alpha=np.ones(4),
+        #         size=1
+        #     )
         
         '''
 
-        for _ in range(max_size):
+        for _ in range(self.max_size):
+            
+            genes = np.array(
+                [
+                    random.uniform(self.epsilon, 1)
+                    for _ in range(self.max_genes)
+                ]
+            )
 
-            first_element = random.uniform(self.epsilon, 0.98)
-            second_element = random.uniform(self.epsilon, 1 - first_element - self.epsilon)
-            third_element = 1 - (first_element + second_element)
+            genes = genes / np.sum(genes)
+            
+            random.shuffle(genes)
 
-            self.ind = [first_element, second_element, third_element]
-            random.shuffle(self.ind)
-
-            self.population.append(self.ind)
+            self.population.append(genes)
 
         return np.array(self.population)
 
@@ -177,12 +185,23 @@ class GA:
         y_hat = P @ W.T
         fitness = self.evaluate_population(y_test, y_hat)
 
+        best_idx = np.argmin(fitness)
+
         best_ind = W[best_idx]
         best_fit = fitness[best_idx]
+
+        return self.best_, best_idx
+
+        # best_ind = W[best_idx]
+        # best_fit = fitness[best_idx]
 
         # best_ind = max(y_hat, key=evaluate_population(y_test, y_hat))
         # fitness = evaluate_population(y_test, y_hat)
 
-        return self.best_, best_ind, best_fit
+        # return self.best_, best_ind, best_fit
+
+        # best_individual = W[best_idx]
+        # best_prediction = y_hat[:, best_idx]
+        # best_mse = mse_scores[best_idx]
 
     
