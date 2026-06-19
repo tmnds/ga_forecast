@@ -6,14 +6,11 @@ from sklearn.metrics import mean_squared_error
 class GeneticAlgorithm:
     def __init__(
             self, 
-            y_test, 
             max_size_population=20, 
             max_genes=6,
             generations=50, 
             size_tournament=3
         ):
-
-        self.y_test = y_test
 
         self.max_size_population = max_size_population
         self.max_genes = max_genes
@@ -163,7 +160,7 @@ class GeneticAlgorithm:
 
         '''
 
-        W = self.start_population(self.max_size_population)
+        W = self.start_population()
 
         for _ in range(self.generations):
             y_hat = P @ W.T
