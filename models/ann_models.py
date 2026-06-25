@@ -13,7 +13,7 @@ from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.preprocessing import MinMaxScaler
 
 # This will suppress ALL FutureWarning messages
-warnings.simplefilter(action='ignore', category=RuntimeWarning)
+# warnings.simplefilter(action='ignore', category=RuntimeWarning)
 
 
 def mean_square_error(y_true, y_pred):
@@ -295,18 +295,27 @@ class GridSCN(BaseModel):
 
                     self.update_best_model(scn, error, pred_valid)
 
-    def train(self, data):
+    def get_predict(self, data):
 
-        self.grid_search(data)
         pred_test = self.best_model.predict(data['input_test'])
         error_test = mean_squared_error(data['target_test'], pred_test)
         self.lst_results.append(error_test)
+
+        return {
+            'pred_test': pred_test,
+            'error_test': error_test
+        }
+
+    def train(self, data):
+
+        self.grid_search(data)
+        predict = self.get_predict(data) 
         
         return {
             
             'lst_results': self.lst_results,
-            'pred_test': pred_test,
-            'error_test': error_test,
+            'pred_test': predict['pred_test'],
+            'error_test': predict['error_test'],
             'pred_valid': self.best_valid_preds,
             'best_rna': self.best_model,
             'best_errors_list': self.best_errors_list
@@ -441,21 +450,35 @@ class GridELM(BaseModel):
             )
 
             self.update_best_model(elm, error, pred_valid_denom)
-    
-    def train(self, data):
 
-        self.grid_search(data)
+    def get_predict(self, data):
+
         pred_test = self.best_model.predict(data['input_test_norm'])
         pred_test_denom = DataProcessing.denorm_data(data['target_train'], pred_test)
         error_test = mean_squared_error(data['target_test'], pred_test_denom)
         self.lst_results.append(error_test)
 
         return {
+            'pred_test': pred_test,
+            'pred_test_denom': pred_test_denom,
+            'error_test': error_test
+        }
+    
+    def train(self, data):
+        
+        seeds = 10
+        for sd in range(seeds):
+
+            self.current_seed = sd
+
+            self.grid_search(data)
+            predict = self.get_predict(data) 
+
+        return {
         
         'lst_results': self.lst_results,
-        'pred_test': pred_test,
-        'pred_test_denom': pred_test_denom,
-        'error_test': error_test,
+        'pred_test': predict['pred_test'],
+        'pred_test_denom': predict['pred_test_denom'],
         'pred_valid': self.best_valid_preds,
         'best_rna': self.best_model,
         'best_errors_list': self.best_errors_list

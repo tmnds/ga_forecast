@@ -78,11 +78,9 @@ class GeneticAlgorithm:
 
     def tournament_selection(self, population, fitness, size_tournament):
         '''
-        # 3. Seleção
-        # Alguns dos melhores candidatos são escolhidos.
-        # Esses candidatos irão gerar a próxima geração.
-
-        # Distinguir com base na qualidade, permitir que os melhores individuos se tornem pais da próxima geração.
+        Seleção
+        Alguns dos melhores candidatos são escolhidos.
+        Esses candidatos irão gerar a próxima geração.
 
         Processo probabilístico, onde indivíduos com melhor fitness têm maior chance de serem selecionados, mas mesmo os piores têm uma chance (evitando convergência prematura).
         

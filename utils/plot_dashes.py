@@ -34,7 +34,7 @@ def get_error_distribution(test_target, pred_test):
     plt.title("Distribuição do erro")
     plt.show()
 
-def get_prediction_plot(test_target, pred_test):
+def get_prediction_plot(test_target, pred_test, dataset='Name'):
 
     plt.figure(figsize=(12,6))
     x = np.arange(len(test_target))
@@ -42,7 +42,7 @@ def get_prediction_plot(test_target, pred_test):
     plt.plot(x, test_target, label='Real', linewidth=2)
     plt.plot(x, pred_test, label='Predito', linestyle='--', linewidth=2)
 
-    plt.title("Comparação: Real vs Predito", fontsize=14)
+    plt.title(f"{dataset}", fontsize=14)
     plt.xlabel("Tempo")
     plt.ylabel("Valor")
 

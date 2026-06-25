@@ -45,7 +45,6 @@ class SVM(BaseModel):
                     self.update_best_model(svr, error, pred_valid)
     
     def train(self, data):
-        
 
         self.grid_search(data)   
         predict = self.get_predict(data) 

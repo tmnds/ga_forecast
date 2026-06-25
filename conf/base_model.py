@@ -1,3 +1,4 @@
+import copy
 class BaseModel:
     def __init__(self):
         self.lst_results = []
@@ -11,7 +12,12 @@ class BaseModel:
         
         if error < self.best_error:
 
-            self.best_model = model
+            self.best_model = copy.deepcopy(model)
             self.best_valid_preds = preds_valid
             self.best_error = error
-            self.best_errors_list.append({'erro': error, 'params': self.best_model.get_params()})
+            self.best_errors_list.append(
+                {
+                'erro': error, 
+                'params': self.best_model.get_params()
+                }
+            )
