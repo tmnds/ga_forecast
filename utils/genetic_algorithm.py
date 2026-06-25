@@ -69,7 +69,7 @@ class GeneticAlgorithm:
         
         '''
         ind_metrics = []
-
+        
         for _ in range(y_hat.shape[1]):
             fitness = 1 / mean_squared_error(y_test, y_hat[:,_])
             ind_metrics.append(fitness)
@@ -179,4 +179,10 @@ class GeneticAlgorithm:
             new_generation = self.crossover(selected_parents)
             W = self.mutation(new_generation)
         
-        return self.best_all_fits, self.global_best_fits, self.best_ind
+        return {
+            'best_ind': self.best_ind,
+            'best_fitness': self.global_best_fits,
+            'best_mse': 1 / self.global_best_fits,
+            'fitness_curve': self.best_all_fits
+        }
+ 

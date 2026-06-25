@@ -39,10 +39,10 @@ class SVM(BaseModel):
                     svr = SVR(kernel='rbf', C=c, epsilon=e, gamma=g)
                     svr.fit(data['input_train_norm'], data['target_train'])
                 
-                    preds = svr.predict(data['input_valid_norm'])
-                    error = mean_squared_error(data['target_valid'], preds) 
+                    pred_valid = svr.predict(data['input_valid_norm'])
+                    error = mean_squared_error(data['target_valid'], pred_valid) 
 
-                    self.update_best_model(svr, error)
+                    self.update_best_model(svr, error, pred_valid)
     
     def train(self, data):
         
@@ -54,6 +54,7 @@ class SVM(BaseModel):
             
             'lst_results': self.lst_results,
             'pred_test': predict['pred_test'],
-            'best_svr': self.best_model,
+            'pred_valid': self.best_valid_preds,
+            'best_rna': self.best_model,
             'best_errors_list': self.best_errors_list
         }

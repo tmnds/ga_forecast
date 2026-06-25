@@ -102,10 +102,11 @@ class MLP(BaseModel):
                     
                     rna.fit(data['input_train_norm'],data['target_train_norm']) # Treina o modelo com os dados de treinamento
 
-                    preds = rna.predict(data['input_valid_norm'])
-                    error = mean_squared_error(data['target_valid_norm'], preds) 
+                    pred_valid = rna.predict(data['input_valid_norm'])
+                    pred_valid_denom = DataProcessing.denorm_data(data['target_train'], pred_valid)
+                    error = mean_squared_error(data['target_valid_norm'], pred_valid) 
 
-                    self.update_best_model(rna, error)
+                    self.update_best_model(rna, error, pred_valid_denom)
         
     def train(self, data):
 
@@ -123,6 +124,7 @@ class MLP(BaseModel):
             'lst_results': self.lst_results,
             'pred_test': predict['pred_test'],
             'pred_test_denom': predict['pred_test_denom'],
+            'pred_valid': self.best_valid_preds,
             'best_rna': self.best_model,
             'best_errors_list': self.best_errors_list
         }
@@ -283,15 +285,15 @@ class GridSCN(BaseModel):
                         data['target_train']
                     )
 
-                    preds = scn.predict(
+                    pred_valid = scn.predict(
                         data['input_valid']
                         )
                     
                     error = mean_squared_error(
-                        data['target_valid'], preds
+                        data['target_valid'], pred_valid
                     )
 
-                    self.update_best_model(scn, error)
+                    self.update_best_model(scn, error, pred_valid)
 
     def train(self, data):
 
@@ -299,10 +301,15 @@ class GridSCN(BaseModel):
         pred_test = self.best_model.predict(data['input_test'])
         error_test = mean_squared_error(data['target_test'], pred_test)
         self.lst_results.append(error_test)
-
+        
         return {
+            
+            'lst_results': self.lst_results,
             'pred_test': pred_test,
-            'error_test': error_test
+            'error_test': error_test,
+            'pred_valid': self.best_valid_preds,
+            'best_rna': self.best_model,
+            'best_errors_list': self.best_errors_list
         }
 class ELM(BaseEstimator, RegressorMixin):
     model = None
@@ -419,28 +426,37 @@ class GridELM(BaseModel):
             )
             
             elm.fit(
-                data['input_train'], 
-                data['target_train']
+                data['input_train_norm'], 
+                data['target_train_norm']
             )
 
-            preds = elm.predict(
-                data['input_valid']
+            pred_valid = elm.predict(
+                data['input_valid_norm']
                 )
             
+            pred_valid_denom = DataProcessing.denorm_data(data['target_train'], pred_valid)
+            
             error = mean_squared_error(
-                data['target_valid'], preds
+                data['target_valid_norm'], pred_valid
             )
 
-            self.update_best_model(elm, error)
+            self.update_best_model(elm, error, pred_valid_denom)
     
     def train(self, data):
 
         self.grid_search(data)
-        pred_test = self.best_model.predict(data['input_test'])
-        error_test = mean_squared_error(data['target_test'], pred_test)
+        pred_test = self.best_model.predict(data['input_test_norm'])
+        pred_test_denom = DataProcessing.denorm_data(data['target_train'], pred_test)
+        error_test = mean_squared_error(data['target_test'], pred_test_denom)
         self.lst_results.append(error_test)
 
         return {
-            'pred_test': pred_test,
-            'error_test': error_test
-        }
+        
+        'lst_results': self.lst_results,
+        'pred_test': pred_test,
+        'pred_test_denom': pred_test_denom,
+        'error_test': error_test,
+        'pred_valid': self.best_valid_preds,
+        'best_rna': self.best_model,
+        'best_errors_list': self.best_errors_list
+    }

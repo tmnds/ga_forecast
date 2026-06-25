@@ -24,10 +24,10 @@ class RF(BaseModel):
                 rf = RandomForestRegressor(n_estimators=n, max_depth=d, random_state=self.current_seed)
                 rf.fit(data['input_train_norm'], data['target_train'])
 
-                preds = rf.predict(data['input_valid_norm'])
-                error = mean_squared_error(data['target_valid'], preds)
+                pred_valid = rf.predict(data['input_valid_norm'])
+                error = mean_squared_error(data['target_valid'], pred_valid)
 
-                self.update_best_model(rf, error)
+                self.update_best_model(rf, error, pred_valid)
     
     def get_predict(self, data):
         
@@ -54,7 +54,8 @@ class RF(BaseModel):
             
             'lst_results': self.lst_results,
             'pred_test': predict['pred_test'],
-            'best_rf': self.best_model,
+            'pred_valid': self.best_valid_preds,
+            'best_rna': self.best_model,
             'best_errors_list': self.best_errors_list
         }
 class GBoosting(BaseModel):
@@ -83,10 +84,10 @@ class GBoosting(BaseModel):
                     gb = GradientBoostingRegressor(n_estimators=n, max_depth=d, learning_rate=lr, random_state=self.current_seed)
                     gb.fit(data['input_train_norm'], data['target_train'])
 
-                    preds = gb.predict(data['input_valid_norm'])
-                    error = mean_squared_error(data['target_valid'], preds)
+                    pred_valid = gb.predict(data['input_valid_norm'])
+                    error = mean_squared_error(data['target_valid'], pred_valid)
 
-                    self.update_best_model(gb, error)
+                    self.update_best_model(gb, error, pred_valid)
     
     def get_predict(self, data):
         
@@ -110,8 +111,10 @@ class GBoosting(BaseModel):
             predict = self.get_predict(data) 
         
         return {
+            
             'lst_results': self.lst_results,
             'pred_test': predict['pred_test'],
-            'best_gb': self.best_model,
+            'pred_valid': self.best_valid_preds,
+            'best_rna': self.best_model,
             'best_errors_list': self.best_errors_list
         }
